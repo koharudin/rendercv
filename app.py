@@ -1,10 +1,19 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import subprocess
 import uuid
 import os
+import yaml
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # atau spesifik: ["http://localhost:3000"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class CVRequest(BaseModel):
     yaml: str
@@ -18,18 +27,31 @@ def homepage():
 
 @app.post("/render")
 def render_cv(data: CVRequest):
-    filename = f"/output/{uuid.uuid4()}.yaml"
-    output_dir = "/output"
+    uuid_spec = uuid.uuid4();
+    foldername = f"/output/{uuid_spec}"
+    
+    os.makedirs(foldername, exist_ok=True)
+    filename = f"{foldername}/request.yaml"
+
+    # yaml_str = yaml.dump(data.yaml, sort_keys=False)
 
     with open(filename, "w") as f:
         f.write(data.yaml)
 
-    subprocess.run(
+    result = subprocess.run(
         ["rendercv", "render", filename],
-        check=True
+        check=True,
+        capture_output=True,
+        text=True
     )
 
+    if result.returncode != 0:
+        return {
+            "status": "error",
+            "stderr": result.stderr
+        }
+
     return {
-        "status": "ok ",
-        "files": os.listdir(output_dir)
+        "status": "ok",
+        "stdout": result.stdout
     }
