@@ -44,6 +44,7 @@ dependencies = [
     'pydantic-extra-types>=2.10.6', # Validate extra types
     'ruamel.yaml>=0.18.10',         # Parse YAML files
     'markdown>=3.10',               # Convert Markdown to HTML
+    'PyJWT>=2.8.0',   # 👈 TAMBAHKAN INI
 ]
 classifiers = [
     "Intended Audience :: Science/Research",
