@@ -1,12 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from fastapi import HTTPException
 import subprocess
 import uuid
 import os
 import yaml
+import jwt
 
 app = FastAPI()
+
+SECRET_KEY = "SECRET"
+ALGORITHM = "HS256"
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # atau spesifik: ["http://localhost:3000"]
@@ -17,6 +24,11 @@ app.add_middleware(
 
 class CVRequest(BaseModel):
     yaml: str
+
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    role: str
 
 @app.get("/")
 def homepage():
@@ -54,4 +66,21 @@ def render_cv(data: CVRequest):
     return {
         "status": "ok",
         "stdout": result.stdout
+    }
+
+@app.post("/login")
+def login(email: str, password: str):
+    # SIMULASI USER (ganti DB)
+    if email == "admin@mail.com" and password == "123":
+        user = {"id": 1, "name": "Admin", "role": "ADMIN"}
+    elif email == "user@mail.com" and password == "123":
+        user = {"id": 2, "name": "User", "role": "USER"}
+    else:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    token = jwt.encode(user, SECRET_KEY, algorithm=ALGORITHM)
+
+    return {
+        "token": token,
+        "user": user
     }
